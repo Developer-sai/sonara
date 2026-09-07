@@ -50,3 +50,6 @@ next-env.d.ts
 /data/
 *.log
 /_old_backup/
+
+.vercel
+.env*.local
