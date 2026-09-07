@@ -1,0 +1,1375 @@
+file:///c%3A/Users/ranga/Downloads/sonara/plan.txt {"mtime":1788712975893,"ctime":1788712975893,"size":0,"etag":"3gk3p1bic0","orphaned":false,"typeId":""}
+Absolutely. Since you want this to be a real web app, not just a concept mockup, the prompt should tell the builder to create the product architecture, UI, cloud-generation engine, link ingestion, authentication, and integration-ready API structure.
+
+ One important adjustment: don't instruct the builder to scrape Spotify/YouTube Music pages or bypass their APIs. Spotify requires authorized access for user data and has specific restrictions around artwork, attribution, derived listening metrics, and use of its platform.  Spotify for Developers+1  Spotify also currently limits new apps in development mode to a small allowlist, so the integration should be architected as an optional provider rather than making the entire MVP dependent on it.  Spotify for Developers
+
+ Here is the master build prompt I'd use:
+
+ # Build SONARA — Your Music. Your Aura.
+
+ Create a polished, production-quality web application called SONARA.
+
+ Tagline:\
+ Your music. Your aura.
+
+ ## 1\. Product Vision
+
+ SONARA is a creative music-visualisation platform that turns a user's music listening, playlists, songs, albums and artists into beautiful personalised visual experiences.
+
+ The core idea is:
+
+ > What if your music could become an image?
+
+ Users should be able to provide music through supported integrations or links, select a timeframe or collection, and generate a personalised Music Cloud — a visual composition containing song titles, artist names, album artwork/thumbnails, colours and listening information.
+
+ SONARA should feel like a combination of:
+
+ - Music discovery
+- Personal music identity
+- Digital collage creation
+- Canva-style visual design
+- Spotify/YouTube Music sharing aesthetics
+- Social-media-ready content
+- Personal visualisation
+
+ SONARA is not a music streaming service.
+
+ It is a creative layer that works around a user's existing music ecosystem.
+
+---
+
+ # 2\. Primary User Experience
+
+ The main experience should be extremely simple:
+
+ Add your music → Choose what to visualise → Generate → Customise → Share
+
+ The landing page should immediately communicate this.
+
+ Hero:
+
+ > What does your music look like?
+
+ Subheading:
+
+ > Turn your songs, artists and playlists into beautiful music clouds, collages and visual stories.
+
+ Primary CTA:
+
+ > Create your music cloud
+
+ Secondary CTA:
+
+ > Explore examples
+
+---
+
+ # 3\. MVP Input Methods
+
+ Create an input screen called:
+
+ ## "Add your music"
+
+ Give users several options.
+
+ ### Option A — Paste a music link
+
+ Allow users to paste supported links such as:
+
+ - Spotify song links
+- Spotify album links
+- Spotify playlist links
+- YouTube Music links
+- YouTube playlist links
+- Other supported music URLs
+
+ Example:
+
+ > Paste a Spotify or YouTube Music link
+
+ Button:
+
+ > Add music
+
+ The application should identify the provider and parse the link.
+
+ Do not scrape websites, bypass authentication, or circumvent provider restrictions.
+
+ Use official APIs or permitted metadata sources wherever available.
+
+ If an integration cannot legally or technically provide the required information, gracefully explain the limitation and allow the user to manually add songs.
+
+---
+
+ # 4\. Spotify Integration
+
+ Build the application with a provider abstraction so Spotify is one provider rather than the entire application's architecture.
+
+ Create:
+
+```
+MusicProvider
+├── SpotifyProvider
+├── YouTubeMusicProvider
+├── ManualProvider
+└── Future providers
+```
+
+ Spotify should use official OAuth/API functionality where available.
+
+ Never expose client secrets in the browser.
+
+ Use a secure backend/server-side integration where required.
+
+ Only request the minimum permissions necessary.
+
+ Provide:
+
+ > Connect Spotify
+
+ After connection, users should be able to select available music/listening data that the authorized API permits.
+
+ Do not assume that every desired listening metric is available.
+
+ Do not create unsupported derived Spotify metrics.
+
+ Do not download Spotify content.
+
+ Do not modify, crop, alter or permanently redistribute provider artwork.
+
+ Where provider content is displayed, preserve required attribution and links back to the relevant provider content.
+
+ Build the system so provider-specific restrictions can be enforced independently.
+
+---
+
+ # 5\. YouTube Music / YouTube Integration
+
+ Create the architecture for a YouTube/YouTube Music provider.
+
+ Use official Google APIs and OAuth where appropriate.
+
+ Do not scrape YouTube Music.
+
+ If a specific YouTube Music listening-history feature is unavailable through an official API, do not fake it.
+
+ Instead support:
+
+ - Public/shared playlist URLs
+- User-provided links
+- Manually imported songs
+- Supported metadata sources
+- Future official integration
+
+ The UI should clearly distinguish:
+
+ > Connected
+
+ > Link imported
+
+ > Manual
+
+---
+
+ # 6\. Manual Music Input
+
+ This is extremely important for the MVP.
+
+ Users should be able to create a cloud without connecting an account.
+
+ Create:
+
+ ## "Add songs manually"
+
+ Allow users to:
+
+ - Search songs
+- Enter song title
+- Enter artist
+- Enter album
+- Add artwork URL where legally permitted
+- Paste supported music links
+- Add multiple songs
+- Remove songs
+- Reorder songs
+
+ Example:
+
+```
+Search for a song...
+
+[ Song title        Artist       + ]
+
+Added songs:
+
+01  Song A — Artist A       [×]
+02  Song B — Artist B       [×]
+03  Song C — Artist C       [×]
+
+[ Generate cloud ]
+```
+
+ This guarantees that SONARA can function even when third-party APIs are unavailable.
+
+---
+
+ # 7\. Music Cloud Generator
+
+ This is the signature feature.
+
+ Call it:
+
+ # Music Cloud
+
+ The generator should transform a collection of songs into a visual composition.
+
+ Each song can be represented by:
+
+ - Song title
+- Artist
+- Album
+- Album artwork where permitted
+- Provider
+- External music URL
+- Optional listening weight
+- Optional ranking
+- Optional frequency
+
+ The visualisation algorithm should intelligently position elements rather than simply displaying a grid.
+
+---
+
+ # 8\. Cloud Algorithm
+
+ Build a deterministic but visually varied layout engine.
+
+ Inputs:
+
+```
+songs[]
+artists[]
+albums[]
+frequency[]
+ranking[]
+artwork[]
+theme
+density
+canvasRatio
+```
+
+ The algorithm should:
+
+ 1. Identify repeated artists.
+2. Identify repeated songs.
+3. Calculate relative importance where permitted.
+4. Assign visual weights.
+5. Place high-priority elements prominently.
+6. Avoid overlapping important text.
+7. Cluster related elements.
+8. Create visual balance.
+9. Generate background colours.
+10. Produce a visually interesting composition.
+
+ The result should feel like a designed poster rather than a spreadsheet.
+
+ Example:
+
+```
+                 ARTIST A
+
+       SONG TITLE             ARTIST B
+
+   [album]       SONG C
+
+                 ARTIST C
+
+      [album]                 SONG D
+
+             ARTIST A
+```
+
+ Allow the cloud to contain hundreds of elements while maintaining readability.
+
+---
+
+ # 9\. Cloud Styles
+
+ Create multiple visual modes.
+
+ ## Minimal
+
+ Large typography.
+
+ White/black background.
+
+ Very editorial.
+
+ ## Collage
+
+ Album artwork arranged organically.
+
+ ## Chaos
+
+ Dense overlapping music elements.
+
+ Energetic youth aesthetic.
+
+ ## Dream
+
+ Soft gradients, blur, glow and translucent elements.
+
+ ## Magazine
+
+ Editorial typography and structured layout.
+
+ ## Polaroid
+
+ Album artwork displayed like photographs.
+
+ ## Neon
+
+ Dark background with vibrant colours.
+
+ ## Y2K
+
+ Chrome, gradients, stars and nostalgic styling.
+
+ ## Mono
+
+ One-colour visual treatment.
+
+ ## Aura
+
+ Abstract gradient background with music elements floating around the canvas.
+
+ Each style should produce a noticeably different result.
+
+---
+
+ # 10\. Album Artwork
+
+ When permitted by the relevant provider, display album artwork in its original form and follow provider attribution/linking requirements.
+
+ Do not build functionality that modifies third-party artwork.
+
+ The visual design should place artwork into surrounding layouts rather than editing the artwork itself.
+
+ For Spotify content in particular, maintain required attribution and links to Spotify content. Spotify's current documentation specifically says Spotify visual content should remain in its original form and that metadata/cover art must link back to the relevant Spotify content.  Spotify for Developers+1
+
+ For manually uploaded artwork, only allow users to upload content they have the right to use.
+
+---
+
+ # 11\. Time Periods
+
+ Create a beautiful timeframe selector.
+
+ Options:
+
+ - Today
+- This week
+- This month
+- Last month
+- Last 3 months
+- Last 6 months
+- This year
+- Custom range
+- All-time
+
+ For manually supplied playlists/links, label the result according to the collection rather than pretending it represents listening history.
+
+ Example:
+
+ > My August
+
+ or
+
+ > Summer 2026
+
+---
+
+ # 12\. Music Cloud Types
+
+ Allow users to select what they want to visualise.
+
+ ### Songs Cloud
+
+ Every song becomes an element.
+
+ ### Artist Cloud
+
+ Artists become the primary elements.
+
+ ### Album Cloud
+
+ Album artwork becomes the primary visual.
+
+ ### Mixed Cloud
+
+ Songs + artists + albums.
+
+ ### Top Tracks
+
+ Focus on highest-ranked songs.
+
+ ### My Sound
+
+ A complete visual summary.
+
+ ### Playlist Cloud
+
+ Visualise one playlist.
+
+ ### Group Cloud
+
+ Combine multiple users' music.
+
+---
+
+ # 13\. "My Sound"
+
+ Create a special template called:
+
+ # My Sound
+
+ Example:
+
+```
+MY SOUND
+
+August 2026
+
+47 songs
+23 artists
+8 genres
+
+SZA
+Frank Ocean
+The Weeknd
+Drake
+Billie Eilish
+
+[visual music cloud]
+
+YOUR SOUND
+
+R&B • Pop • Alternative
+```
+
+ The actual statistics should only be shown when they can be legitimately calculated from available data.
+
+ Do not invent listening statistics.
+
+---
+
+ # 14\. Social Feature — Our Sound
+
+ Create a future-ready feature called:
+
+ # Our Sound
+
+ Users can combine multiple music collections.
+
+ Example:
+
+ > OUR SOUND
+>
+>  Alex + Jamie + Sam
+
+ Generate a combined visual cloud.
+
+ Show:
+
+ - Shared artists
+- Shared songs
+- Unique artists
+- Unique songs
+- Combined artwork
+- Individual colour identities
+
+ This should be designed to become a viral/social feature.
+
+---
+
+ # 15\. Visual Editor
+
+ After generating a cloud, open a full visual editor.
+
+ The user should be able to customise:
+
+ ### Layout
+
+ - Cloud
+- Grid
+- Spiral
+- Orbit
+- Scatter
+- Stack
+- Collage
+
+ ### Typography
+
+ - Font
+- Size
+- Weight
+- Letter spacing
+- Capitalisation
+
+ ### Colours
+
+ - Background
+- Text
+- Accent
+- Gradient
+- Automatic palette
+
+ ### Density
+
+ Low → Medium → High → Extreme
+
+ ### Artwork
+
+ - Show
+- Hide
+- Small
+- Medium
+- Large
+
+ ### Information
+
+ Toggle:
+
+ - Artist names
+- Song titles
+- Album names
+- Rankings
+- Numbers
+- Provider attribution
+
+---
+
+ # 16\. Automatic Colour System
+
+ When permitted, derive a visual palette from the available artwork or metadata.
+
+ Generate:
+
+ - Primary colour
+- Secondary colour
+- Accent colour
+- Background
+- Text colour
+
+ Make sure the resulting design maintains accessibility and readable contrast.
+
+ Provide:
+
+ > Auto palette
+
+ and:
+
+ > Randomise
+
+ buttons.
+
+---
+
+ # 17\. Share / Export
+
+ This is a critical part of the product.
+
+ Create:
+
+ ## Share your sound
+
+ Export formats:
+
+ - Instagram Story — 9:16
+- Instagram Post — 1:1
+- Square — 1080×1080
+- Portrait — 4:5
+- Wallpaper
+- Desktop wallpaper
+- Social card
+
+ Allow:
+
+ > Download PNG
+
+ > Copy share link
+
+ > Share
+
+ For provider content, ensure export functionality complies with the applicable provider's content and artwork rules. Do not assume that every provider's artwork can simply be downloaded into an unrestricted image file.
+
+---
+
+ # 18\. Templates
+
+ Create a template marketplace/library interface.
+
+ Categories:
+
+ ### Trending
+
+ ### Minimal
+
+ ### Dark
+
+ ### Colourful
+
+ ### Y2K
+
+ ### Editorial
+
+ ### Dreamy
+
+ ### Album Art
+
+ ### Typography
+
+ ### Monthly
+
+ ### Yearly
+
+ Example templates:
+
+ > Midnight
+
+ > After Hours
+
+ > Summer Sound
+
+ > Main Character
+
+ > Late Night
+
+ > Sunday
+
+ > 2000s
+
+ > My Year
+
+ > Chaos
+
+ > Soft
+
+ > Neon
+
+ Templates should feel youth-oriented without looking childish.
+
+---
+
+ # 19\. Landing Page
+
+ Create a premium landing page.
+
+ Hero:
+
+ # What does your music look like?
+
+ Subheading:
+
+ > Turn your songs, artists and playlists into visual art.
+
+ CTA:
+
+ > Create your music cloud
+
+ Below the hero, show animated example clouds.
+
+ Sections:
+
+ ### How it works
+
+ 1. Add your music
+2. Choose your vibe
+3. Generate your cloud
+4. Make it yours
+5. Share it
+
+ ### Examples
+
+ Show several visual compositions.
+
+ ### Create your sound
+
+ Explain:
+
+ > Your music is more than statistics. It's identity.
+
+ ### Social section
+
+ Show:
+
+ > My Sound
+
+ > Our Sound
+
+ > My Week
+
+ > My Year
+
+ ### Final CTA
+
+ > Make your music visual.
+
+---
+
+ # 20\. User Accounts
+
+ Support optional accounts.
+
+ Unauthenticated users should be able to create a basic cloud where possible.
+
+ Authenticated users can:
+
+ - Save clouds
+- Rename clouds
+- Re-edit clouds
+- Create collections
+- View history
+- Create profile
+- Share public creations
+
+ Do not force account creation before allowing users to experience the core product.
+
+ Use progressive account creation.
+
+---
+
+ # 21\. User Profile
+
+ Create a profile system.
+
+ Example:
+
+```
+@alex
+
+YOUR MUSIC. YOUR AURA.
+
+MY SOUND
+August 2026
+
+[Music Cloud]
+
+Favourite artists
+...
+
+Recent clouds
+...
+```
+
+ Users can control whether creations are:
+
+ - Private
+- Unlisted
+- Public
+
+---
+
+ # 22\. Public Share Pages
+
+ Every shared creation should have a beautiful public URL.
+
+ Example:
+
+```
+sonara.app/s/alex/my-august
+```
+
+ The page should show:
+
+ - Visualisation
+- Title
+- Creator
+- Date
+- Music information
+- Supported provider attribution
+- Links to relevant music content where required
+- Create your own button
+
+ CTA:
+
+ > Create your own SONARA
+
+---
+
+ # 23\. Database
+
+ Use a scalable relational database.
+
+ Suggested entities:
+
+```
+users
+music_providers
+connected_accounts
+music_items
+artists
+albums
+playlists
+collections
+clouds
+cloud_items
+templates
+themes
+exports
+public_shares
+```
+
+ Never store provider access tokens insecurely.
+
+ Encrypt sensitive credentials.
+
+ Minimise stored personal data.
+
+ Allow users to disconnect integrations and delete their data.
+
+ Spotify's developer policy specifically requires mechanisms for users to disconnect their Spotify account and requires deletion/no further processing of personal data after disconnection in applicable circumstances.  Spotify for Developers
+
+---
+
+ # 24\. Security
+
+ Implement:
+
+ - Secure OAuth
+- Server-side secrets
+- Environment variables
+- Input validation
+- Rate limiting
+- CSRF protection where applicable
+- XSS protection
+- Secure cookies
+- Database access controls
+- Encryption for sensitive credentials
+- Automatic token refresh where permitted
+- Account deletion
+- Data deletion
+- Provider disconnect
+
+ Never put:
+
+```
+CLIENT_SECRET
+API_SECRET
+DATABASE_PASSWORD
+PRIVATE_KEYS
+```
+
+ in client-side code.
+
+---
+
+ # 25\. Privacy
+
+ Create:
+
+ - Privacy Policy page
+- Terms of Service
+- Cookie preferences
+- Data deletion functionality
+- Disconnect provider functionality
+
+ Explain clearly:
+
+ - What data is collected
+- Why it is collected
+- How long it is stored
+- Which providers are connected
+- How users can disconnect
+- How users can delete their account
+
+ Only request data necessary for the feature being used.
+
+---
+
+ # 26\. Design Language
+
+ SONARA should look premium, modern and youth-oriented.
+
+ Avoid:
+
+ - Generic SaaS dashboards
+- Corporate blue
+- Excessive rounded cards
+- Cheap gradients
+- Childish graphics
+- Clutter
+
+ Use:
+
+ - Deep black
+- Off-white
+- Electric accent colours
+- Large typography
+- Album-art-inspired colour
+- Subtle grain
+- Blur
+- Glass
+- Smooth animations
+- Editorial layouts
+- Full-screen visual compositions
+
+ The music artwork should be the visual hero.
+
+---
+
+ # 27\. Animation
+
+ Use tasteful animation.
+
+ Examples:
+
+ - Album artwork slowly floating
+- Text appearing sequentially
+- Cloud elements moving into position
+- Gradient background shifting
+- Hover interactions
+- Smooth page transitions
+- Generate animation
+
+ The generator should feel magical:
+
+```
+Analysing your music...
+Finding your sound...
+Building your palette...
+Creating your cloud...
+```
+
+ Then reveal the final result.
+
+ Do not make the loading animation unnecessarily slow.
+
+---
+
+ # 28\. Responsive Design
+
+ The entire application must work beautifully on:
+
+ - Mobile
+- Tablet
+- Desktop
+
+ Mobile should be treated as a first-class experience.
+
+ The editor should have:
+
+ - Bottom controls
+- Swipeable panels
+- Large preview
+- Easy export
+
+ Desktop can have:
+
+```
+| Controls |      Canvas      | Layers |
+```
+
+---
+
+ # 29\. Accessibility
+
+ Implement:
+
+ - Keyboard navigation
+- Screen-reader labels
+- High contrast
+- Reduced motion support
+- Focus states
+- Accessible buttons
+- Proper semantic HTML
+- Alt text where applicable
+
+---
+
+ # 30\. Error States
+
+ Design polished error states.
+
+ Examples:
+
+ ### Unsupported link
+
+ > We don't recognise this music link yet.
+
+ ### Provider unavailable
+
+ > This music service isn't currently available. Try another source or add your songs manually.
+
+ ### Authentication expired
+
+ > Your connection expired. Reconnect to continue.
+
+ ### Empty playlist
+
+ > There's nothing here yet.
+
+ ### Too many songs
+
+ > That's a lot of music. Try creating a cloud with up to X items.
+
+ Do not expose technical stack traces to users.
+
+---
+
+ # 31\. Demo Mode
+
+ The application MUST include a demo mode.
+
+ This allows users to immediately experience SONARA without connecting a music account.
+
+ Use fictional/demo music data clearly labelled as demo data.
+
+ Example:
+
+```
+Demo Sound
+
+Midnight Drive
+Neon Hearts
+Afterglow
+...
+```
+
+ Generate realistic-looking clouds from the demo dataset.
+
+ This is important for the landing page and product demonstrations.
+
+---
+
+ # 32\. Architecture
+
+ Use a clean modular architecture.
+
+ Recommended conceptual structure:
+
+```
+Frontend
+    ↓
+Application API
+    ↓
+Music Provider Layer
+    ├── Spotify
+    ├── YouTube/Google
+    ├── Manual
+    └── Future providers
+    ↓
+Normalised Music Model
+    ↓
+Cloud Generation Engine
+    ↓
+Visual Rendering Engine
+    ↓
+Export / Share
+```
+
+ Create a provider-independent internal data model.
+
+ Example:
+
+```
+MusicItem {
+  id
+  title
+  artist
+  album
+  artworkUrl
+  provider
+  externalUrl
+  providerId
+}
+```
+
+ Do not make the rest of the application dependent on Spotify-specific fields.
+
+---
+
+ # 33\. Cloud Generation Engine
+
+ Create a reusable rendering engine.
+
+ It should accept:
+
+```
+CloudConfig {
+  items
+  layout
+  theme
+  density
+  typography
+  artwork
+  colors
+  canvas
+}
+```
+
+ And return a renderable composition.
+
+ Make the engine deterministic where possible so that the same configuration can reproduce the same visual.
+
+ Allow a:
+
+ > Randomise
+
+ button to create variations.
+
+---
+
+ # 34\. Performance
+
+ Optimise for:
+
+ - Fast initial load
+- Lazy loading
+- Image optimisation
+- Virtualisation for large music collections
+- Efficient canvas/SVG rendering
+- Debounced editor changes
+- Caching where permitted
+- API request batching where permitted
+
+ Do not make hundreds of unnecessary API requests.
+
+---
+
+ # 35\. Important Provider Compliance
+
+ Treat every third-party music service as an independent integration with its own legal and technical rules.
+
+ Do not:
+
+ - Scrape private user data
+- Bypass authentication
+- Circumvent API restrictions
+- Download protected audio
+- Rehost provider artwork without permission
+- Modify provider artwork where prohibited
+- Pretend SONARA is affiliated with Spotify or YouTube
+- Claim unsupported listening statistics
+- Create fake streaming statistics
+- Use provider content to train AI
+- Replicate the core functionality of a music-streaming service
+
+ Spotify's current policy explicitly prohibits several of these uses and says applications must add independent value rather than replicate/replace a core Spotify experience.  Spotify for Developers
+
+ Build SONARA as a creative visualisation product, not a replacement music player.
+
+---
+
+ # 36\. Product Philosophy
+
+ Every screen should answer one question:
+
+ > Does this make someone's music feel more personal, visual or shareable?
+
+ If not, don't add it.
+
+ SONARA should feel like:
+
+ > "I discovered something about my music."
+
+ not:
+
+ > "I opened another statistics dashboard."
+
+---
+
+ # 37\. Core MVP Priority
+
+ Build these features first:
+
+ ### P0 — Must Have
+
+ - Beautiful landing page
+- Demo mode
+- Paste supported music links
+- Manual song entry
+- Music collection creation
+- Music Cloud generator
+- Multiple cloud layouts
+- Album artwork support where permitted
+- Colour themes
+- Typography controls
+- Download/share functionality where permitted
+- Responsive design
+- Public share pages
+
+ ### P1 — Next
+
+ - Spotify OAuth
+- Provider abstraction
+- Saved clouds
+- User accounts
+- Profiles
+- History
+- Templates
+- "My Sound"
+
+ ### P2 — Future
+
+ - YouTube/Google integration
+- Our Sound
+- Friend comparison
+- Collaborative clouds
+- Social feed
+- Following
+- Animated clouds
+- More providers
+- Advanced creator tools
+
+---
+
+ # 38\. Final Visual Goal
+
+ When a user opens SONARA, they should immediately think:
+
+ > "I want to see what my music looks like."
+
+ When they generate their first cloud, they should think:
+
+ > "That's actually me."
+
+ When they share it, someone else should think:
+
+ > "Wait, I want to make mine."
+
+ That is the core viral product loop.
+
+---
+
+ # 39\. Final Build Requirement
+
+ Do not create a static mockup.
+
+ Build a functional application with:
+
+ - Working navigation
+- Functional state management
+- Functional music input
+- Functional demo dataset
+- Functional cloud generation
+- Functional visual editor
+- Functional responsive UI
+- Functional save/share flow
+- Proper loading/error states
+- Provider abstraction
+- Secure backend architecture
+- Database-ready models
+- Environment-variable configuration
+- Production-quality component structure
+
+ Where an external provider requires credentials or approval that are not available during development, implement the integration interface and a clearly marked mock/demo provider so the application remains fully usable.
+
+ Use realistic demo data rather than empty placeholders.
+
+ The final result should feel like a real startup product ready for user testing.
+
+ ## Brand
+
+ SONARA
+
+ Your music. Your aura.
+
+ Primary message:
+
+ > What does your music look like?
+
+ Secondary message:
+
+ > Turn your songs into something you can see, feel and share.
+
+ ### One strategic change I'd make
+
+ For the first version, I'd make "Paste a link" + "Create a cloud" the hero rather than requiring Spotify login.
+
+ That's because Spotify's current API access has meaningful restrictions, including development-mode user limits and additional requirements for wider distribution.  Spotify for Developers  You can still build the architecture for Spotify OAuth, but the product shouldn't collapse if the integration isn't approved yet.
+
+ So the actual homepage flow could be:
+
+ SONARA
+
+ > What does your music look like?
+
+ \[ Paste a Spotify / YouTube Music link \]
+
+ or
+
+ \[ Add songs manually \]
+
+ \[ Connect Spotify \]
+
+ ↓
+
+ Choose your vibe
+
+ `Minimal` `Collage` `Dream` `Chaos` `Y2K`
+
+ ↓
+
+ CREATE MY CLOUD
+
+ ↓
+
+ ✨ Your music becomes art.
+
+ That gives you a working MVP before you have to solve every music-platform partnership/API issue.  Spotify for Developers+1
+
+ And I'd make the Music Cloud generator itself the intellectual/product centerpiece. The integrations are inputs; SONARA's visual engine is what makes SONARA different.
+
+  Sources should be able to create such shown in images unlimited songs in that format or some other formats 
+
+https://dribbble.com/search/music-card
+Build a modern, visually stunning web app called SONARA — “Your music. Your aura.”
+
+SONARA is a creative music-visualisation platform where users can paste music links or connect supported services such as Spotify and YouTube Music, then turn their listening history or selected songs into beautiful, shareable visualisations.
+
+Core Features
+
+Landing page with strong SONARA branding and a premium, music-focused aesthetic.
+
+Allow users to paste song/playlist/album links.
+
+Optional Spotify and YouTube Music connection.
+
+Generate personalised music clouds from songs, artists, albums, or listening history.
+
+Display song thumbnails/album artwork alongside songs.
+
+Support daily, weekly, monthly and yearly visualisations when listening-history data is available.
+
+Show artist/song rankings and listening summaries.
+
+Generate album-art collages and colourful music-based designs.
+
+Automatically create colour palettes based on available artwork/metadata where permitted.
+
+Let users choose from multiple visual templates and customise colours, layout, typography and animations.
+
+Allow creations to be saved, downloaded and shared in social-media-friendly formats.
+
+Include user profiles showcasing their musical identity.
+
+Add “Our Sound” visualisations for comparing or combining two users' music.
+
+Include animated and static visualisation options.
+
+UI/UX
+
+Use a premium, modern, Gen-Z-friendly visual style with dark backgrounds, vibrant gradients, glassmorphism, smooth animations and immersive album artwork. The interface should feel creative and social rather than like a traditional music player.
+
+The main flow should be:
+
+Connect / Paste Music → Select Songs or Listening Period → Choose Visual Style → Generate → Customise → Save / Download / Share
+
+SONARA must not be a music-streaming service. It is a creative visual layer around users' existing music platforms.
+
+Use clean responsive design so the entire experience works beautifully on desktop and mobile. Build the app with realistic sample data and polished interactions where external music APIs are unavailable, while keeping the architecture ready for Spotify and YouTube Music integrations.
+now make final verison before  credits ends without any errors 
+Frontend backend use sqlite as database now build final version 
+
+user can create account just user nae password
+no verification just for testing
