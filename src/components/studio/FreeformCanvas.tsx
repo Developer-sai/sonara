@@ -215,6 +215,66 @@ const FreeformCanvas = forwardRef<FreeformCanvasHandle, { className?: string }>(
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [aspectRatio]);
 
+    // ---- Fit the view to the available container width on mount / aspect
+    // change — without this, the 480px-wide edit canvas overflows most phone
+    // viewports and there's no way to see the whole thing without scrolling. ----
+    useEffect(() => {
+      const container = containerRef.current;
+      if (!container) return;
+      const { editW, editH } = editSize(aspectRatio);
+      const availW = container.clientWidth;
+      const availH = Math.min(window.innerHeight * 0.7, 720);
+      if (!availW || !availH) return;
+      const fitZoom = Math.min(availW / editW, availH / editH, 1);
+      if (Number.isFinite(fitZoom) && fitZoom > 0) {
+        useStudioStore.getState().setViewZoom(fitZoom);
+      }
+    }, [aspectRatio]);
+
+    // ---- Two-finger pinch-to-zoom on touch devices. Only ever intercepts
+    // genuine 2-touch gestures (preventDefault only fires then), so normal
+    // single-finger panning/dragging on the canvas is completely unaffected. ----
+    useEffect(() => {
+      const container = containerRef.current;
+      if (!container) return;
+      let pinching = false;
+      let startDist = 0;
+      let startZoom = 1;
+
+      function touchDist(touches: TouchList) {
+        const dx = touches[0].clientX - touches[1].clientX;
+        const dy = touches[0].clientY - touches[1].clientY;
+        return Math.hypot(dx, dy);
+      }
+      function onTouchStart(e: TouchEvent) {
+        if (e.touches.length === 2) {
+          pinching = true;
+          startDist = touchDist(e.touches);
+          startZoom = useStudioStore.getState().viewZoom;
+        }
+      }
+      function onTouchMove(e: TouchEvent) {
+        if (!pinching || e.touches.length !== 2) return;
+        e.preventDefault();
+        const ratio = touchDist(e.touches) / (startDist || 1);
+        useStudioStore.getState().setViewZoom(startZoom * ratio);
+      }
+      function onTouchEnd(e: TouchEvent) {
+        if (e.touches.length < 2) pinching = false;
+      }
+
+      container.addEventListener("touchstart", onTouchStart, { passive: true });
+      container.addEventListener("touchmove", onTouchMove, { passive: false });
+      container.addEventListener("touchend", onTouchEnd, { passive: true });
+      container.addEventListener("touchcancel", onTouchEnd, { passive: true });
+      return () => {
+        container.removeEventListener("touchstart", onTouchStart);
+        container.removeEventListener("touchmove", onTouchMove);
+        container.removeEventListener("touchend", onTouchEnd);
+        container.removeEventListener("touchcancel", onTouchEnd);
+      };
+    }, []);
+
     // ---- Diff-sync: reflect store.elements changes onto the fabric canvas ----
     useEffect(() => {
       const unsub = useStudioStore.subscribe((state, prev) => {
@@ -283,11 +343,8 @@ const FreeformCanvas = forwardRef<FreeformCanvasHandle, { className?: string }>(
               originX: "center",
               originY: "center",
               angle: el.rotation,
-              scaleX: el.width / (img.width || el.width),
-              scaleY: el.height / (img.height || el.height),
             });
-            applyFrameStroke(img, el.frame);
-            img.clipPath = imageClipPath(el.frame, el.borderRadius, img.width || el.width, img.height || el.height);
+            fitImageCover(img, el);
             obj = img;
           } catch {
             return;
@@ -318,12 +375,18 @@ const FreeformCanvas = forwardRef<FreeformCanvasHandle, { className?: string }>(
       });
     }
 
+    /** Always crops to the element's own visible footprint (cropW/cropH,
+     *  computed by the caller from the cover-fit scale) — a plain rect for
+     *  "none"/"polaroid" (rounded when a radius applies), or a circle sized
+     *  to the smaller crop dimension. There is no "no clip" case any more:
+     *  once cover-fit can scale an image past its box, something always has
+     *  to trim the overflow back down to size. */
     function imageClipPath(
       frame: ImageCanvasElement["frame"],
       radius: number,
       w: number,
       h: number
-    ): fabric.Object | undefined {
+    ): fabric.Object {
       if (frame === "circle") {
         return new fabric.Circle({
           radius: Math.min(w, h) / 2,
@@ -331,12 +394,11 @@ const FreeformCanvas = forwardRef<FreeformCanvasHandle, { className?: string }>(
           originY: "center",
         });
       }
-      if (frame === "polaroid" || !radius) return undefined;
       return new fabric.Rect({
         width: w,
         height: h,
-        rx: radius,
-        ry: radius,
+        rx: frame === "polaroid" ? 0 : radius,
+        ry: frame === "polaroid" ? 0 : radius,
         originX: "center",
         originY: "center",
       });
@@ -350,6 +412,22 @@ const FreeformCanvas = forwardRef<FreeformCanvasHandle, { className?: string }>(
       }
     }
 
+    /** Fits an image into its element's box the way CSS `object-fit: cover`
+     *  does — uniform scale (no stretch/distortion), cropping whichever
+     *  dimension overflows — instead of the old independent scaleX/scaleY
+     *  that squashed any photo whose aspect ratio didn't already match its
+     *  grid cell. */
+    function fitImageCover(img: fabric.FabricImage, el: ImageCanvasElement) {
+      const natW = img.width || el.width;
+      const natH = img.height || el.height;
+      const scale = Math.max(el.width / natW, el.height / natH) || 1;
+      img.set({ scaleX: scale, scaleY: scale });
+      const cropW = el.width / scale;
+      const cropH = el.height / scale;
+      applyFrameStroke(img, el.frame);
+      img.clipPath = imageClipPath(el.frame, el.borderRadius, cropW, cropH);
+    }
+
     function applyElementProps(obj: fabric.Object, el: CanvasElement) {
       obj.set({
         left: el.x,
@@ -361,22 +439,12 @@ const FreeformCanvas = forwardRef<FreeformCanvasHandle, { className?: string }>(
         const wantSrc = proxied(el.src) || el.src;
         if (img.getSrc() !== wantSrc) {
           img.setSrc(wantSrc, { crossOrigin: "anonymous" }).then(() => {
-            img.set({
-              scaleX: el.width / (img.width || el.width),
-              scaleY: el.height / (img.height || el.height),
-            });
-            applyFrameStroke(img, el.frame);
-            img.clipPath = imageClipPath(el.frame, el.borderRadius, img.width || el.width, img.height || el.height);
+            fitImageCover(img, el);
             img.setCoords();
             fcRef.current?.requestRenderAll();
           });
         } else {
-          img.set({
-            scaleX: el.width / (img.width || el.width),
-            scaleY: el.height / (img.height || el.height),
-          });
-          applyFrameStroke(img, el.frame);
-          img.clipPath = imageClipPath(el.frame, el.borderRadius, img.width || el.width, img.height || el.height);
+          fitImageCover(img, el);
         }
       } else {
         const tb = obj as fabric.Textbox;
@@ -471,11 +539,18 @@ const FreeformCanvas = forwardRef<FreeformCanvasHandle, { className?: string }>(
 
       repaint(0);
 
-      function loop() {
+      // Throttled to ~30fps — the gradient/chrome drift is slow enough that
+      // full 60-120hz repaint work is wasted, and on lower-power mobile
+      // devices it competes with the main thread for scrolling/typing/drag.
+      let lastFrameAt = 0;
+      function loop(now: number) {
         if (cancelled) return;
         const mode = useStudioStore.getState().theme.backgroundMode;
         if (mode === "aura_gradient" || mode === "y2k_chrome") {
-          repaint(Date.now() - mountTime);
+          if (now - lastFrameAt >= 33) {
+            lastFrameAt = now;
+            repaint(Date.now() - mountTime);
+          }
         }
         rafId = requestAnimationFrame(loop);
       }
@@ -591,7 +666,7 @@ const FreeformCanvas = forwardRef<FreeformCanvasHandle, { className?: string }>(
           <div
             ref={containerRef}
             className={cn("relative mx-auto overflow-auto no-scrollbar", className)}
-            style={{ maxHeight: "min(70vh, 720px)" }}
+            style={{ maxHeight: "min(70vh, 720px)", touchAction: "pan-x pan-y" }}
           >
             <div
               className="mx-auto flex items-center justify-center"

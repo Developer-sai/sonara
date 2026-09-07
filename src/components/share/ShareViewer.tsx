@@ -100,32 +100,42 @@ export default function ShareViewer({ cloud }: { cloud: Cloud }) {
             const img = await fabric.FabricImage.fromURL(proxied(el.src) || el.src, {
               crossOrigin: "anonymous",
             });
+            // Cover-fit (uniform scale + crop), matching the editor — an
+            // independent scaleX/scaleY here would stretch/distort any photo
+            // whose aspect ratio doesn't already match its box.
+            const natW = img.width || el.width;
+            const natH = img.height || el.height;
+            const boxW = el.width * scale;
+            const boxH = el.height * scale;
+            const imgScale = Math.max(boxW / natW, boxH / natH) || 1;
             img.set({
               left: el.x * scale,
               top: el.y * scale,
               originX: "center",
               originY: "center",
               angle: el.rotation,
-              scaleX: (el.width * scale) / (img.width || el.width),
-              scaleY: (el.height * scale) / (img.height || el.height),
+              scaleX: imgScale,
+              scaleY: imgScale,
               selectable: false,
               evented: false,
             });
             if (el.frame === "polaroid") {
               img.set({ stroke: "#f7f5ef", strokeWidth: 14 * scale, strokeUniform: true });
             }
+            const cropW = boxW / imgScale;
+            const cropH = boxH / imgScale;
             if (el.frame === "circle") {
               img.clipPath = new fabric.Circle({
-                radius: (Math.min(img.width || el.width, img.height || el.height)) / 2,
+                radius: Math.min(cropW, cropH) / 2,
                 originX: "center",
                 originY: "center",
               });
-            } else if (el.frame !== "polaroid" && el.borderRadius) {
+            } else {
               img.clipPath = new fabric.Rect({
-                width: img.width || el.width,
-                height: img.height || el.height,
-                rx: el.borderRadius,
-                ry: el.borderRadius,
+                width: cropW,
+                height: cropH,
+                rx: el.frame === "polaroid" ? 0 : el.borderRadius,
+                ry: el.frame === "polaroid" ? 0 : el.borderRadius,
                 originX: "center",
                 originY: "center",
               });
